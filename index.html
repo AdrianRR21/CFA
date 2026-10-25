@@ -24,6 +24,7 @@
   --def:#2C5A9E; --def-soft:#E5ECF7;
   --exp:#9A6214; --exp-soft:#F6EDDD;
   --form:#1D5E4E; --form-soft:#E2EEEA;
+  --tr:#5B47A8; --tr-soft:#ECE8F7;
   --good:#1F7A4A; --bad:#B23B30;
   --f-display:"Newsreader", Georgia, "Times New Roman", serif;
   --f-body:"IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -36,7 +37,7 @@
   --bg:#0F1513; --surface:#18201D; --ink:#E6ECE9; --muted:#97A39E; --line:#2A3531;
   --accent:#5FB89D; --accent-ink:#08130F; --accent-soft:#1D3029;
   --def:#8DB0E8; --def-soft:#1C2635; --exp:#E0AE62; --exp-soft:#2E2618;
-  --form:#5FB89D; --form-soft:#1D3029; --good:#6CC992; --bad:#EE7F72; color-scheme:dark}}
+  --form:#5FB89D; --form-soft:#1D3029; --tr:#B4A2EE; --tr-soft:#25203A; --good:#6CC992; --bad:#EE7F72; color-scheme:dark}}
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -88,6 +89,19 @@ h1.view{font-family:var(--f-display);font-weight:500;font-size:clamp(30px,8vw,40
 .card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;font-weight:500}
 .t-def{color:var(--def);background:var(--def-soft)} .t-exp{color:var(--exp);background:var(--exp-soft)} .t-form{color:var(--form);background:var(--form-soft)}
+.t-tr{color:var(--tr);background:var(--tr-soft)}
+.glossary{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--tr-soft);border:0;border-radius:var(--r);padding:16px 18px;margin-bottom:28px}
+.glossary .subj-name{color:var(--tr)}
+.glossary .chev{color:var(--tr);flex:none}
+.terms{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.term{padding:14px 2px 10px;border-bottom:1px solid var(--line)}
+.term-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;align-items:baseline}
+.term-pair .en{font-family:var(--f-display);font-size:19px;font-weight:500;line-height:1.3;overflow-wrap:anywhere;min-width:0}
+.term-pair .es{font-size:16px;color:var(--ink);overflow-wrap:anywhere;min-width:0}
+.lang{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.term .note{margin-top:6px}
+.term .card-foot{margin-top:6px}
+.qbig{font-family:var(--f-display);font-size:26px;font-weight:500;line-height:1.25}
 .tag.ex{color:var(--muted);background:transparent;border:1px dashed var(--line)}
 .card h3{font-family:var(--f-display);font-size:20px;font-weight:500;margin:0 0 6px;line-height:1.3;text-wrap:balance}
 .body{overflow-wrap:anywhere}
@@ -163,6 +177,8 @@ h1.view{font-family:var(--f-display);font-weight:500;font-size:clamp(30px,8vw,40
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TYPES = { def:{label:"Definición", cls:"t-def", ask:"Define"}, exp:{label:"Explicación", cls:"t-exp", ask:"Explica"}, form:{label:"Fórmula", cls:"t-form", ask:"Escribe la fórmula de"} };
+const TR = { label:"Traducción", cls:"t-tr" };
+const ALLTYPES = { ...TYPES, tr: TR };
 const uid = p => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
 const ICON_CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -185,7 +201,7 @@ function renderBody(c){
 
 /* ---------- Data (guardado en este dispositivo) ---------- */
 const LS = "cuaderno-cfa-v1";
-const S = { subjects:[], cards:[] };
+const S = { subjects:[], cards:[], terms:[] };
 const EXAMPLES = {
   subjects:[{id:"s-fixed",name:"Fixed Income",createdAt:1},{id:"s-quant",name:"Quantitative Methods",createdAt:2}],
   cards:[
@@ -194,23 +210,27 @@ const EXAMPLES = {
     {id:"c-ex3",subjectId:"s-fixed",type:"exp",title:"Por qué el precio de un bono cae cuando suben los tipos",body:"Los flujos del bono son fijos. Si el mercado exige un rendimiento mayor, esos mismos flujos se descuentan a una tasa más alta y su valor presente baja.\n\nCuanto más largo el vencimiento y menor el cupón, mayor la sensibilidad.",ok:0,ko:0,createdAt:3,example:true},
     {id:"c-ex4",subjectId:"s-quant",type:"form",title:"Valor futuro con capitalización compuesta",body:"FV = PV × (1 + r)^{n}",ok:0,ko:0,createdAt:4,example:true},
     {id:"c-ex5",subjectId:"s-quant",type:"def",title:"Sharpe ratio",body:"Exceso de rentabilidad sobre el activo libre de riesgo por unidad de riesgo total (desviación típica).",ok:0,ko:0,createdAt:5,example:true}
+  ],
+  terms:[
+    {id:"t-ex1",en:"Accrued interest",es:"Cupón corrido",note:"Interés devengado desde el último pago de cupón.",ok:0,ko:0,createdAt:1,example:true},
+    {id:"t-ex2",en:"Goodwill",es:"Fondo de comercio",note:"",ok:0,ko:0,createdAt:2,example:true}
   ]
 };
 function load(){
   try{
     const raw = localStorage.getItem(LS);
-    if (raw === null){ S.subjects = EXAMPLES.subjects.map(x=>({...x})); S.cards = EXAMPLES.cards.map(x=>({...x})); save(); return; }
-    const d = JSON.parse(raw); S.subjects = d.subjects||[]; S.cards = d.cards||[];
+    if (raw === null){ S.subjects = EXAMPLES.subjects.map(x=>({...x})); S.cards = EXAMPLES.cards.map(x=>({...x})); S.terms = EXAMPLES.terms.map(x=>({...x})); save(); return; }
+    const d = JSON.parse(raw); S.subjects = d.subjects||[]; S.cards = d.cards||[]; S.terms = d.terms||[];
   }catch(e){}
 }
 function save(){
-  try{ localStorage.setItem(LS, JSON.stringify({subjects:S.subjects, cards:S.cards})); }
+  try{ localStorage.setItem(LS, JSON.stringify({subjects:S.subjects, cards:S.cards, terms:S.terms})); }
   catch(e){ toast("No se pudo guardar en este dispositivo"); }
 }
-const arr = coll => coll==="subjects" ? S.subjects : S.cards;
+const arr = coll => S[coll];
 function put(coll, row){ const a=arr(coll); const i=a.findIndex(x=>x.id===row.id); i<0?a.push(row):a[i]=row; save(); render(); }
 function patch(coll, id, data){ const r=arr(coll).find(x=>x.id===id); if(r) Object.assign(r,data); save(); render(); }
-function del(coll, id){ if(coll==="subjects") S.subjects=S.subjects.filter(x=>x.id!==id); else S.cards=S.cards.filter(x=>x.id!==id); save(); render(); }
+function del(coll, id){ S[coll]=S[coll].filter(x=>x.id!==id); save(); render(); }
 
 /* ---------- View state ---------- */
 const V = { view:"home", subj:null, filter:"all", q:"", confirm:null, quiz:null };
@@ -221,7 +241,8 @@ function mastery(list){ if(!list.length) return null; const pts=list.reduce((a,c
 function render(){
   const app = $("#app"), fab = $("#fab");
   if (V.view==="subject" && !subjById(V.subj)) V.view="home";
-  if (V.view==="home") { app.innerHTML = homeHTML(); fab.innerHTML = S.cards.length ? '<button class="primary" data-act="quiz-all">Pregúntame</button>' : ""; }
+  if (V.view==="home") { app.innerHTML = homeHTML(); fab.innerHTML = (S.cards.length||S.terms.length) ? '<button class="primary" data-act="quiz-all">Pregúntame</button>' : ""; }
+  else if (V.view==="terms") { app.innerHTML = termsHTML(); fab.innerHTML = (S.terms.length?'<button class="ghost" data-act="quiz-terms">Pregúntame</button>':'')+'<button class="primary" data-act="add-term">+ Añadir</button>'; }
   else if (V.view==="subject") { app.innerHTML = subjectHTML(); fab.innerHTML = '<button class="ghost" data-act="quiz-subj">Pregúntame</button><button class="primary" data-act="add-card">+ Añadir</button>'; }
   else if (V.view==="quiz") { app.innerHTML = quizHTML(); fab.innerHTML = ""; }
 }
@@ -232,8 +253,12 @@ function header(right, back){
 function homeHTML(){
   const subs = [...S.subjects].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
   let h = header("", null);
-  h += '<p class="eyebrow">Tus asignaturas</p><h1 class="view">Lo que llevas estudiado</h1>';
+  h += '<p class="eyebrow">Tu cuaderno</p><h1 class="view">Lo que llevas estudiado</h1>';
   h += '<p class="sub">'+(S.cards.length ? S.cards.length+' fichas en '+subs.length+' asignaturas. Toca una para ver o añadir fichas.' : 'Crea una asignatura y empieza a guardar definiciones, explicaciones y fórmulas.')+'</p>';
+  const mt = mastery(S.terms);
+  h += '<button class="glossary" data-act="terms"><div class="subj-main"><div class="subj-name">Traducciones</div><div class="subj-meta">'+S.terms.length+' términos inglés · español, de todas las asignaturas</div></div>'+
+       '<div class="mastery">'+(mt===null?'<b>–</b>':'<b>'+mt+'%</b>')+'dominio</div><span class="chev">'+ICON_CHEV+'</span></button>';
+  h += '<p class="eyebrow" style="margin-bottom:6px">Asignaturas</p>';
   if (!subs.length) h += '<div class="empty"><strong>Aún no tienes asignaturas</strong>Escribe abajo la primera, por ejemplo «Fixed Income».</div>';
   else {
     h += '<div class="subjects">';
@@ -282,6 +307,44 @@ function subjectHTML(){
   return h;
 }
 
+function termsHTML(){
+  const q = V.q.trim().toLowerCase();
+  const all = [...S.terms].sort((a,b)=>a.en.localeCompare(b.en,"en",{sensitivity:"base"}));
+  const list = all.filter(t => !q || (t.en+" "+t.es+" "+(t.note||"")).toLowerCase().includes(q));
+  let h = header("", "home");
+  h += '<p class="eyebrow">'+all.length+' términos · general</p><h1 class="view">Traducciones</h1><p class="sub">Vocabulario del CFA en inglés con su equivalente en español, ordenado alfabéticamente.</p>';
+  h += '<div class="toolbar"><input class="search" id="search" placeholder="Buscar en inglés o español" value="'+esc(V.q)+'" aria-label="Buscar términos" autocomplete="off"></div>';
+  if (!all.length) h += '<div class="empty"><strong>Aún no hay traducciones</strong>Pulsa «+ Añadir» para guardar tu primer término, por ejemplo «Accrued interest → Cupón corrido».</div>';
+  else if (!list.length) h += '<div class="empty">Ningún término coincide.</div>';
+  else {
+    h += '<div class="terms">';
+    for (const t of list){
+      const confirm = V.confirm==="del-"+t.id;
+      h += '<div class="term"><div class="term-pair"><div class="en"><span class="lang">Inglés</span>'+esc(t.en)+'</div><div class="es"><span class="lang">Español</span>'+esc(t.es)+'</div></div>'+
+        (t.note?'<div class="body note">'+textFmt(t.note)+'</div>':'')+
+        '<div class="card-foot">'+(t.example?'<span class="tag ex">Ejemplo</span>':'')+((t.ok||t.ko)?'<span class="ok">✓ '+(t.ok||0)+'</span><span class="ko">✗ '+(t.ko||0)+'</span>':'')+'<span class="spacer"></span>'+
+        (confirm?'<button class="mini danger" data-act="del-term-yes" data-id="'+t.id+'">Sí, borrar</button><button class="mini" data-act="cancel">No</button>'
+                :'<button class="mini" data-act="edit-term" data-id="'+t.id+'">Editar</button><button class="mini danger" data-act="del-term" data-id="'+t.id+'">Borrar</button>')+
+        '</div></div>';
+    }
+    h += '</div>';
+  }
+  return h;
+}
+
+/* ---------- Term sheet ---------- */
+const TF = { id:null };
+function openTermSheet(t){
+  TF.id = t ? t.id : null; F.open = true;
+  $("#sheet").innerHTML = '<div class="scrim" data-act="scrim"><form class="sheet" data-form="term" role="dialog" aria-label="Traducción">'+
+   '<h2>'+(t?"Editar traducción":"Nueva traducción")+'</h2>'+
+   '<div class="field"><label for="t-en">En inglés</label><input id="t-en" value="'+esc(t?t.en:"")+'" placeholder="Ej. Accrued interest" autocomplete="off" autocapitalize="sentences"></div>'+
+   '<div class="field"><label for="t-es">En español</label><input id="t-es" value="'+esc(t?t.es:"")+'" placeholder="Ej. Cupón corrido" autocomplete="off"></div>'+
+   '<div class="field"><label for="t-note">Nota (opcional)</label><textarea id="t-note" style="min-height:80px" placeholder="Contexto, sinónimos o cuándo se usa">'+esc(t?t.note:"")+'</textarea></div>'+
+   '<div class="actions"><button type="button" class="ghost" data-act="close">Cancelar</button><button type="submit" class="primary" id="t-save"'+(t?"":" disabled")+'>Guardar</button></div>'+
+   '</form></div>';
+}
+
 /* ---------- Card sheet ---------- */
 const F = { open:false, id:null, type:"def", title:"", body:"" };
 function openSheet(card){
@@ -304,15 +367,22 @@ function drawSheet(){
 
 /* ---------- Quiz ---------- */
 function startQuiz(scope){
-  V.quiz = { stage:"setup", subjects: scope==="all" ? S.subjects.map(s=>s.id) : [V.subj], types:["def","exp","form"], size:10, i:0, deck:[], right:0, shown:false, answer:"", from: V.view };
+  const types = scope==="terms" ? ["tr"] : scope==="subj" ? ["def","exp","form"] : ["def","exp","form","tr"];
+  V.quiz = { stage:"setup", scope, subjects: scope==="subj" ? [V.subj] : S.subjects.map(s=>s.id), types, size:10, i:0, deck:[], right:0, shown:false, answer:"", from: V.view };
   V.view="quiz"; render(); window.scrollTo(0,0);
 }
-function poolSize(){ const Q=V.quiz; return S.cards.filter(c=>Q.subjects.includes(c.subjectId) && Q.types.includes(c.type)).length; }
-function buildDeck(){
+function pool(){
   const Q=V.quiz;
-  const pool = S.cards.filter(c=>Q.subjects.includes(c.subjectId) && Q.types.includes(c.type));
+  const cards = S.cards.filter(c=>Q.subjects.includes(c.subjectId) && Q.types.includes(c.type)).map(c=>({kind:"card", ref:c}));
+  const terms = Q.types.includes("tr") ? S.terms.map(t=>({kind:"term", ref:t})) : [];
+  return cards.concat(terms);
+}
+function poolSize(){ return pool().length; }
+function buildDeck(){
+  const Q=V.quiz, p = pool();
   const w = c => { const ok=c.ok||0, ko=c.ko||0; return (ok+ko===0?3:1) + ko*1.5 - Math.min(ok,4)*0.3 + Math.random()*1.5; };
-  Q.deck = pool.map(c=>[w(c),c]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0, Q.size===0?pool.length:Q.size);
+  Q.deck = p.map(x=>[w(x.ref),x]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]).slice(0, Q.size===0?p.length:Q.size);
+  for (const x of Q.deck) if (x.kind==="term") x.dir = Math.random()<.5 ? "en" : "es";
   Q.i=0; Q.right=0; Q.shown=false; Q.answer=""; Q.stage = Q.deck.length?"ask":"setup";
 }
 function quizHTML(){
@@ -320,8 +390,9 @@ function quizHTML(){
   if (Q.stage==="setup"){
     const pool = poolSize();
     h += '<p class="eyebrow">Modo repaso</p><h1 class="view">Pregúntame</h1><p class="sub">Primero salen las fichas que nunca has repasado y las que fallaste.</p><div class="qsetup">';
-    if (S.subjects.length>1) h += '<div><p class="eyebrow">Asignaturas</p><div class="chips">'+S.subjects.map(s=>'<button class="chip" data-act="qsubj" data-id="'+s.id+'" aria-pressed="'+Q.subjects.includes(s.id)+'">'+esc(s.name)+'</button>').join("")+'</div></div>';
-    h += '<div><p class="eyebrow">Tipo</p><div class="chips">'+Object.entries(TYPES).map(([k,T])=>'<button class="chip" data-act="qtype" data-t="'+k+'" aria-pressed="'+Q.types.includes(k)+'">'+T.label+'</button>').join("")+'</div></div>';
+    const onlyTr = Q.types.length===1 && Q.types[0]==="tr";
+    if (S.subjects.length>1 && !onlyTr) h += '<div><p class="eyebrow">Asignaturas</p><div class="chips">'+S.subjects.map(s=>'<button class="chip" data-act="qsubj" data-id="'+s.id+'" aria-pressed="'+Q.subjects.includes(s.id)+'">'+esc(s.name)+'</button>').join("")+'</div></div>';
+    h += '<div><p class="eyebrow">Tipo</p><div class="chips">'+Object.entries(ALLTYPES).map(([k,T])=>'<button class="chip" data-act="qtype" data-t="'+k+'" aria-pressed="'+Q.types.includes(k)+'">'+T.label+'</button>').join("")+'</div></div>';
     h += '<div><p class="eyebrow">Cuántas</p><div class="chips">'+[[5,"5"],[10,"10"],[20,"20"],[0,"Todas"]].map(([n,l])=>'<button class="chip" data-act="qsize" data-n="'+n+'" aria-pressed="'+(Q.size===n)+'">'+l+'</button>').join("")+'</div></div>';
     h += '<div><button class="primary" data-act="qstart"'+(pool?"":" disabled")+'>'+(pool?"Empezar · "+(Q.size&&Q.size<pool?Q.size:pool)+" preguntas":"No hay fichas con esta selección")+'</button></div></div>';
     return h;
@@ -331,13 +402,19 @@ function quizHTML(){
     return h + '<div class="done"><p class="eyebrow">Repaso terminado</p><div class="big">'+Q.right+'/'+Q.deck.length+'</div><p class="sub" style="margin-top:12px">'+(pct>=80?"Muy bien, lo tienes dominado.":pct>=50?"Vas bien. Las falladas saldrán antes la próxima vez.":"Toca repasar. Las falladas saldrán primero la próxima vez.")+'</p>'+
       '<div class="actions" style="justify-content:center"><button class="ghost" data-act="quit">Volver</button><button class="primary" data-act="qagain">Otra ronda</button></div></div>';
   }
-  const c = Q.deck[Q.i]; const T=TYPES[c.type]; const s=subjById(c.subjectId);
-  h += '<p class="eyebrow">'+(Q.i+1)+' de '+Q.deck.length+(s?' · '+esc(s.name):'')+'</p><div class="progress"><i style="width:'+(100*Q.i/Q.deck.length)+'%"></i></div>';
-  h += '<div class="qcard"><div class="qask"><span class="tag '+T.cls+'">'+T.label+'</span> &nbsp;'+T.ask+'</div><h2 class="qtitle">'+esc(c.title)+'</h2>';
+  const item = Q.deck[Q.i], c = item.ref;
+  const isT = item.kind==="term";
+  const T = isT ? TR : TYPES[c.type]; const s = isT ? null : subjById(c.subjectId);
+  const ask = isT ? (item.dir==="en" ? "Tradúcelo al español" : "¿Cómo se dice en inglés?") : T.ask;
+  const title = isT ? (item.dir==="en" ? c.en : c.es) : c.title;
+  h += '<p class="eyebrow">'+(Q.i+1)+' de '+Q.deck.length+(s?' · '+esc(s.name):isT?' · Traducciones':'')+'</p><div class="progress"><i style="width:'+(100*Q.i/Q.deck.length)+'%"></i></div>';
+  h += '<div class="qcard"><div class="qask"><span class="tag '+T.cls+'">'+T.label+'</span> &nbsp;'+ask+'</div><h2 class="qtitle">'+esc(title)+'</h2>';
   h += '<div class="qanswer"><textarea id="qans" placeholder="Escribe tu respuesta (opcional) o piénsala y pulsa «Ver respuesta»"'+(Q.shown?" readonly":"")+'>'+esc(Q.answer)+'</textarea></div>';
   if (!Q.shown) h += '<div class="actions" style="justify-content:flex-start;margin-top:14px"><button class="primary" data-act="qshow">Ver respuesta</button></div>';
   else {
-    h += '<div class="reveal"><p class="eyebrow" style="margin:0 0 8px">Tus apuntes</p>'+renderBody(c)+'</div>';
+    h += isT
+      ? '<div class="reveal"><p class="eyebrow" style="margin:0 0 8px">'+(item.dir==="en"?"En español":"En inglés")+'</p><div class="qbig">'+esc(item.dir==="en"?c.es:c.en)+'</div>'+(c.note?'<div class="body note" style="margin-top:8px">'+textFmt(c.note)+'</div>':'')+'</div>'
+      : '<div class="reveal"><p class="eyebrow" style="margin:0 0 8px">Tus apuntes</p>'+renderBody(c)+'</div>';
     h += '<div class="grade"><button class="g-ko" data-act="qgrade" data-r="0">✗ Repasar</button><button class="g-ok" data-act="qgrade" data-r="1">✓ La sabía</button></div>';
   }
   return h + '</div>';
@@ -345,7 +422,7 @@ function quizHTML(){
 
 /* ---------- Backup ---------- */
 function exportData(){
-  const data = JSON.stringify({app:"cuaderno-cfa", version:1, exportedAt:new Date().toISOString(), subjects:S.subjects, cards:S.cards}, null, 2);
+  const data = JSON.stringify({app:"cuaderno-cfa", version:1, exportedAt:new Date().toISOString(), subjects:S.subjects, cards:S.cards, terms:S.terms}, null, 2);
   const name = "cuaderno-cfa-"+new Date().toISOString().slice(0,10)+".json";
   const file = new File([data], name, {type:"application/json"});
   if (navigator.canShare && navigator.canShare({files:[file]})) { navigator.share({files:[file], title:"Cuaderno CFA"}).catch(()=>{}); return; }
@@ -362,7 +439,9 @@ function importData(file){
       let ns=0, nc=0;
       for (const s of d.subjects) if (s && s.id && !sIds.has(s.id)) { S.subjects.push(s); ns++; }
       for (const c of d.cards) if (c && c.id && !cIds.has(c.id)) { S.cards.push(c); nc++; }
-      save(); V.view="home"; render(); toast("Importadas "+ns+" asignaturas y "+nc+" fichas");
+      const tIds = new Set(S.terms.map(x=>x.id)); let nt=0;
+      for (const t of (Array.isArray(d.terms)?d.terms:[])) if (t && t.id && t.en && !tIds.has(t.id)) { S.terms.push(t); nt++; }
+      save(); V.view="home"; render(); toast("Importadas "+ns+" asignaturas, "+nc+" fichas y "+nt+" traducciones");
     }catch(e){ toast("Ese archivo no es una copia del Cuaderno CFA"); }
   };
   r.readAsText(file);
@@ -391,7 +470,13 @@ document.addEventListener("click", e => {
     case "ftype": F.type=b.dataset.t; F.title=$("#f-title").value; F.body=$("#f-body").value; drawSheet(); break;
     case "quiz-all": startQuiz("all"); break;
     case "quiz-subj": startQuiz("subj"); break;
-    case "quit": { V.view = V.quiz && V.quiz.from==="subject" && subjById(V.subj) ? "subject" : "home"; V.quiz=null; render(); window.scrollTo(0,0); break; }
+    case "quit": { const fr = V.quiz && V.quiz.from; V.view = fr==="subject" && subjById(V.subj) ? "subject" : fr==="terms" ? "terms" : "home"; V.quiz=null; render(); window.scrollTo(0,0); break; }
+    case "terms": V.view="terms"; V.q=""; V.confirm=null; render(); window.scrollTo(0,0); break;
+    case "add-term": openTermSheet(null); break;
+    case "edit-term": openTermSheet(S.terms.find(t=>t.id===b.dataset.id)); break;
+    case "del-term": V.confirm="del-"+b.dataset.id; render(); break;
+    case "del-term-yes": V.confirm=null; del("terms", b.dataset.id); toast("Traducción borrada"); break;
+    case "quiz-terms": startQuiz("terms"); break;
     case "qsubj": { const Q=V.quiz, id=b.dataset.id; Q.subjects = Q.subjects.includes(id)?Q.subjects.filter(x=>x!==id):[...Q.subjects,id]; render(); break; }
     case "qtype": { const Q=V.quiz, t=b.dataset.t; Q.types = Q.types.includes(t)?Q.types.filter(x=>x!==t):[...Q.types,t]; render(); break; }
     case "qsize": V.quiz.size=+b.dataset.n; render(); break;
@@ -399,11 +484,11 @@ document.addEventListener("click", e => {
     case "qagain": V.quiz.stage="setup"; render(); break;
     case "qshow": { const Q=V.quiz; Q.answer=($("#qans")||{}).value||""; Q.shown=true; render(); break; }
     case "qgrade": {
-      const Q=V.quiz, c=Q.deck[Q.i], r=b.dataset.r==="1";
+      const Q=V.quiz, item=Q.deck[Q.i], c=item.ref, r=b.dataset.r==="1";
       if (r) Q.right++;
       Q.i++; Q.shown=false; Q.answer="";
       if (Q.i>=Q.deck.length) Q.stage="done";
-      patch("cards", c.id, r ? {ok:(c.ok||0)+1, last:Date.now()} : {ko:(c.ko||0)+1, last:Date.now()});
+      patch(item.kind==="term"?"terms":"cards", c.id, r ? {ok:(c.ok||0)+1, last:Date.now()} : {ko:(c.ko||0)+1, last:Date.now()});
       window.scrollTo(0,0); break;
     }
     case "export": exportData(); break;
@@ -416,6 +501,12 @@ document.addEventListener("submit", e => {
   const f = e.target.dataset.form;
   if (f==="newsubj"){ const v=$("#newsubj").value.trim(); if(!v) return; put("subjects", {id:uid("s"), name:v, createdAt:Date.now()}); }
   if (f==="rename"){ const v=$("#rename").value.trim(); if(v) patch("subjects", V.subj, {name:v}); else render(); }
+  if (f==="term"){
+    const en=$("#t-en").value.trim(), es=$("#t-es").value.trim(), note=$("#t-note").value.trim(); if(!en||!es) return;
+    if (TF.id){ const old=S.terms.find(t=>t.id===TF.id)||{}; put("terms", {...old, en, es, note, example:false}); toast("Traducción actualizada"); }
+    else { put("terms", {id:uid("t"), en, es, note, ok:0, ko:0, createdAt:Date.now()}); toast("Traducción guardada"); }
+    closeSheet();
+  }
   if (f==="card"){
     const title=$("#f-title").value.trim(), body=$("#f-body").value.trim(); if(!title||!body) return;
     if (F.id){ const old=S.cards.find(c=>c.id===F.id)||{}; put("cards", {...old, type:F.type, title, body, example:false}); toast("Ficha actualizada"); }
@@ -430,6 +521,7 @@ document.addEventListener("input", e => {
     $("#f-save").disabled = !(F.title.trim()&&F.body.trim());
     const p=$("#f-prev"); if (F.type==="form" && F.body){ p.hidden=false; p.innerHTML=renderBody({type:"form",body:F.body}); } else p.hidden=true;
   }
+  if (e.target.id==="t-en"||e.target.id==="t-es") $("#t-save").disabled = !($("#t-en").value.trim() && $("#t-es").value.trim());
   if (e.target.id==="qans" && V.quiz) V.quiz.answer=e.target.value;
 });
 document.addEventListener("keydown", e => { if (e.key==="Escape" && F.open) closeSheet(); });

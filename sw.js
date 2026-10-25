@@ -1,5 +1,5 @@
 // Permite abrir la app sin conexión. Siempre intenta la versión nueva primero.
-const CACHE = "cuaderno-cfa-v1";
+const CACHE = "cuaderno-cfa-v2";
 const FILES = ["./", "index.html", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
